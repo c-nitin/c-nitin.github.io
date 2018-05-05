@@ -1,0 +1,91 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<style>
+    .float {
+        z-index: 9999999999999;
+        position: absolute;
+        bottom: 20;
+        right: 20;
+    }
+</style>
+
+<div class="container">
+
+    <div class="page-header">
+        <h3>Video Call <small>powered by Go-Edit, Your ID: <b><span id="number"></span></b></small> </h3>
+    </div>
+    
+
+    <video style="display: none" id="their-video" width="640" height="480" autoplay controls></video>
+    <button id="call" class="btn btn-lg btn-primary">Start a Video Call</button>
+</div>
+
+<video id="my-video" class="float" width="320" height="240" muted="true" autoplay controls></video>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="peer.js"></script>
+<script>
+
+    // Create random id for everyone
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+        }
+
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+    }
+
+    var id = guid();
+    // Initialize a new peer and connect to our server
+    var peer = new Peer(id, {
+        host: 'webrtc-server-peerjs.herokuapp.com',
+        port: 443,
+        secure: true,
+        debug: 1
+    });
+
+    peer.on('error', function (err) {
+        console.log(err);
+        alert(err);
+    });
+
+    function handleCall(call) {
+        call.on('stream', function (remoteStream) {
+            console.log('set thier');
+            $('#call').hide();
+            $('#their-video').show();
+            $('#their-video').prop('src', URL.createObjectURL(remoteStream));
+        });
+    }
+
+    // Setting for chrome
+    var constraints = window.constraints = {
+        audio: true,
+        video: true
+    };
+    navigator.mediaDevices.getUserMedia(constraints)
+            .then(function (stream) {
+                window.localStream = stream;
+                $('#my-video').prop('src', URL.createObjectURL(stream));
+                peer.on('call', function (call) {
+                    call.answer(stream); // Answer the call with an A/V stream.
+                    handleCall(call);
+                });
+
+            });
+
+    $(document).ready(function () {
+        $('#number').text(id);
+        $('#call').on('click', function () {
+            $(this).button('loading');
+            var id = prompt("Enter ID");
+            var call = peer.call(id, window.localStream);
+            handleCall(call);
+        })
+    })
+
+</script>
