@@ -1,5 +1,5 @@
 {
-  "firebase": "Go-Edit",
+  "firebase": "collab-and-edit",
   "public": ".",
   "ignore": [
     "firebase.json",
